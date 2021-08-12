@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:test_app/routes/routes.dart';
 import 'package:test_app/views/dashboard.dart';
 import 'package:test_app/views/home.dart';
+import 'package:test_app/views/maps.dart';
 import 'package:test_app/views/sign_up.dart';
 import 'package:test_app/views/login.dart';
 
@@ -21,6 +22,9 @@ class RouteGenerator {
       case Routes.home:
         return CupertinoPageRoute(
             settings: settings, builder: (context) => Home());
+      case Routes.maps:
+        return CupertinoPageRoute(
+            settings: settings, builder: (context) => Maps());
       default:
       // return _errorRoute();
     }
