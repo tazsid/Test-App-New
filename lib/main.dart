@@ -18,7 +18,7 @@ void main() async {
       theme: ThemeData(
           fontFamily: 'Karla', primaryColor: CustomColors.primaryColor),
       debugShowCheckedModeBanner: false,
-      initialRoute: Routes.login,
+      initialRoute: Routes.home,
       //Uncomment for session
       // initialRoute: GetStorage().read(Constants.isLoggedIn) == null
       //     ? Routes.login

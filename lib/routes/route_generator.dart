@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:test_app/routes/routes.dart';
 import 'package:test_app/views/dashboard.dart';
+import 'package:test_app/views/home.dart';
 import 'package:test_app/views/sign_up.dart';
 import 'package:test_app/views/login.dart';
 
@@ -17,8 +18,11 @@ class RouteGenerator {
       case Routes.dashboard:
         return CupertinoPageRoute(
             settings: settings, builder: (context) => Dashboard());
+      case Routes.home:
+        return CupertinoPageRoute(
+            settings: settings, builder: (context) => Home());
       default:
-        // return _errorRoute();
+      // return _errorRoute();
     }
   }
 
