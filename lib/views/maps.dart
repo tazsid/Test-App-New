@@ -140,6 +140,8 @@ class _MapsState extends State<Maps> {
                                             devicePixelRatio: 2.5),
                                         'assets/png/marker.png');
 
+                                currentLocation = await location.getLocation();
+
                                 _markers.add(Marker(
                                     markerId: const MarkerId('START'),
                                     position: LatLng(currentLocation.latitude,
@@ -196,22 +198,11 @@ class _MapsState extends State<Maps> {
         checkGps();
         return;
       }
-    }
-
-    // PermissionStatus _permissionGranted;
-
-    // _permissionGranted = await location.hasPermission();
-    if (await permissionHandler.Permission.location.isPermanentlyDenied) {
+    } else if (await permissionHandler
+        .Permission.location.isPermanentlyDenied) {
       showPermissionDialog();
       return;
-    }
-
-    // if (_permissionGranted == PermissionStatus.deniedForever) {
-    //   showPermissionDialog();
-    //   return;
-    // }
-
-    if (!await permissionHandler.Permission.location.isGranted) {
+    } else if (!await permissionHandler.Permission.location.isGranted) {
       // _permissionGranted = await location.requestPermission();
       var status = await permissionHandler.Permission.location.request();
 
