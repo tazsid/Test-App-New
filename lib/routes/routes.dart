@@ -4,4 +4,5 @@ class Routes {
   static const String dashboard = '/dashboard';
   static const String home = '/home';
   static const String maps = '/maps';
+  static const String listPage = '/list_page';
 }

@@ -105,7 +105,7 @@ class _DashboardState extends State<Dashboard> {
                             ),
                           ),
                         )
-                      : dashboardController.allJobData.length > 0
+                      : dashboardController.allJobData.isNotEmpty
                           ? Expanded(
                               child: Obx(() => ListView.builder(
                                   physics: BouncingScrollPhysics(

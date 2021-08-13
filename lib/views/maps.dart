@@ -47,9 +47,8 @@ class _MapsState extends State<Maps> {
     super.initState();
 
     location = Location();
-    location.changeSettings(accuracy: LocationAccuracy.high);
 
-    checkGps();
+    location.changeSettings(accuracy: LocationAccuracy.high);
   }
 
   @override
@@ -142,11 +141,9 @@ class _MapsState extends State<Maps> {
 
                                 currentLocation = await location.getLocation();
 
-                                _markers.add(Marker(
-                                    markerId: const MarkerId('START'),
-                                    position: LatLng(currentLocation.latitude,
-                                        currentLocation.longitude),
-                                    icon: sourceIcon));
+                                updatePinOnMap();
+
+                                enableChange();
                               },
                             ),
                           )
@@ -188,34 +185,6 @@ class _MapsState extends State<Maps> {
     }
   }
 
-  checkGps() async {
-    var _serviceEnabled = await location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
-        Get.rawSnackbar(message: 'GPS needs to be enabled to use the app');
-
-        checkGps();
-        return;
-      }
-    } else if (await permissionHandler
-        .Permission.location.isPermanentlyDenied) {
-      showPermissionDialog();
-      return;
-    } else if (!await permissionHandler.Permission.location.isGranted) {
-      // _permissionGranted = await location.requestPermission();
-      var status = await permissionHandler.Permission.location.request();
-
-      if (!status.isGranted) {
-        checkGps();
-        return;
-      }
-    } else {
-      currentLocation = await location.getLocation();
-      enableChange();
-    }
-  }
-
   enableChange() {
     location.onLocationChanged.listen((LocationData cLoc) {
       // cLoc contains the lat and long of the
@@ -225,79 +194,5 @@ class _MapsState extends State<Maps> {
 
       updatePinOnMap();
     });
-  }
-
-  showPermissionDialog() {
-    showDialog(
-        // barrierColor: CustomColors.transparentHeaderColor,
-        context: context,
-        builder: (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(25),
-            ),
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            child: Container(
-              padding:
-                  EdgeInsets.only(left: 20, top: 35, right: 20, bottom: 20),
-              // margin: EdgeInsets.only(top: 45),
-              decoration: BoxDecoration(
-                  shape: BoxShape.rectangle,
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black,
-                        offset: Offset(0, 5),
-                        blurRadius: 5),
-                  ]),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Utils.textView(
-                      text:
-                          'Please grant location and camera permissions to use the app',
-                      fontSize: 17,
-                      textColor: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      textAlign: TextAlign.center),
-                  SizedBox(height: 35),
-                  Container(
-                    // margin:
-                    //     const EdgeInsets.only(left: 20, bottom: 10, right: 20),
-                    child: RaisedButton(
-                        elevation: 5,
-                        highlightElevation: 0,
-                        padding: EdgeInsets.only(
-                            top: 15, bottom: 15, left: 20, right: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.0),
-                        ),
-                        onPressed: () async {
-                          Get.back();
-                          permissionHandler.openAppSettings();
-                        },
-                        color: CustomColors.primaryColor,
-                        textColor: Colors.white,
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // SvgPicture.asset(
-                              //   'assets/images/call.svg',
-                              //   semanticsLabel: 'one',
-                              //   height: 20,
-                              //   color: Colors.white,
-                              // ),
-                              // SizedBox(width: 10),
-                              Utils.textView(
-                                  text: 'Allow Permissions',
-                                  fontSize: 15,
-                                  textColor: Colors.white,
-                                  fontWeight: FontWeight.bold)
-                            ])),
-                  )
-                ],
-              ),
-            )));
   }
 }

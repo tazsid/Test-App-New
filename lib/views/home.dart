@@ -4,11 +4,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:location/location.dart';
 import 'package:test_app/common/colors.dart';
 import 'package:test_app/common/size_config.dart';
 import 'package:test_app/common/utils.dart';
+import 'package:test_app/controllers/home_controller.dart';
 import 'package:test_app/routes/routes.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:permission_handler/permission_handler.dart'
+    as permissionHandler;
 
 class Home extends StatefulWidget {
   @override
@@ -19,6 +23,10 @@ class _HomeState extends State<Home> {
   PageController _pageController =
       PageController(initialPage: 0, viewportFraction: 0.8);
 
+  Location location;
+
+  HomeController homeController;
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -27,7 +35,119 @@ class _HomeState extends State<Home> {
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    location = Location();
+
+    checkGps();
+  }
+
+  checkGps() async {
+    var _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        Get.rawSnackbar(message: 'GPS needs to be enabled to use the app');
+
+        checkGps();
+        return;
+      }
+    }
+
+    if (await permissionHandler.Permission.location.isPermanentlyDenied) {
+      showPermissionDialog();
+      return;
+    } else if (!await permissionHandler.Permission.location.isGranted) {
+      var status = await permissionHandler.Permission.location.request();
+
+      if (!status.isGranted) {
+        checkGps();
+        return;
+      }
+    } else {
+      location.changeSettings(accuracy: LocationAccuracy.high);
+    }
+  }
+
+  showPermissionDialog() {
+    showDialog(
+        // barrierColor: CustomColors.transparentHeaderColor,
+        context: context,
+        builder: (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(25),
+            ),
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            child: Container(
+              padding:
+                  EdgeInsets.only(left: 20, top: 35, right: 20, bottom: 20),
+              // margin: EdgeInsets.only(top: 45),
+              decoration: BoxDecoration(
+                  shape: BoxShape.rectangle,
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black,
+                        offset: Offset(0, 5),
+                        blurRadius: 5),
+                  ]),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Utils.textView(
+                      text:
+                          'Please grant location and camera permissions to use the app',
+                      fontSize: 17,
+                      textColor: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      textAlign: TextAlign.center),
+                  SizedBox(height: 35),
+                  Container(
+                    // margin:
+                    //     const EdgeInsets.only(left: 20, bottom: 10, right: 20),
+                    child: RaisedButton(
+                        elevation: 5,
+                        highlightElevation: 0,
+                        padding: EdgeInsets.only(
+                            top: 15, bottom: 15, left: 20, right: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0),
+                        ),
+                        onPressed: () async {
+                          Get.back();
+                          permissionHandler.openAppSettings();
+                        },
+                        color: CustomColors.primaryColor,
+                        textColor: Colors.white,
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // SvgPicture.asset(
+                              //   'assets/images/call.svg',
+                              //   semanticsLabel: 'one',
+                              //   height: 20,
+                              //   color: Colors.white,
+                              // ),
+                              // SizedBox(width: 10),
+                              Utils.textView(
+                                  text: 'Allow Permissions',
+                                  fontSize: 15,
+                                  textColor: Colors.white,
+                                  fontWeight: FontWeight.bold)
+                            ])),
+                  )
+                ],
+              ),
+            )));
+  }
+
+  @override
   Widget build(BuildContext context) {
+    homeController = Get.put(HomeController());
+
     SizeConfig().init(context);
 
     return WillPopScope(
@@ -81,6 +201,24 @@ class _HomeState extends State<Home> {
                                 right: SizeConfig.screenWidth * 0.04),
                             child: Utils.textView(
                                 text: 'Tracking',
+                                textColor: Colors.blue.shade900,
+                                fontSize: SizeConfig.blockSizeVertical * 3.0),
+                          ),
+                        ),
+                        Divider(color: Colors.grey.shade400),
+                        InkWell(
+                          onTap: () {
+                            Get.toNamed(Routes.listPage);
+                          },
+                          child: Container(
+                            alignment: Alignment.centerLeft,
+                            padding: EdgeInsets.only(
+                                left: SizeConfig.screenWidth * 0.04,
+                                top: SizeConfig.screenHeight * 0.01,
+                                bottom: SizeConfig.screenHeight * 0.01,
+                                right: SizeConfig.screenWidth * 0.04),
+                            child: Utils.textView(
+                                text: 'List',
                                 textColor: Colors.blue.shade900,
                                 fontSize: SizeConfig.blockSizeVertical * 3.0),
                           ),
@@ -173,7 +311,8 @@ class _HomeState extends State<Home> {
                                     Container(
                                         margin: EdgeInsets.only(
                                             left: SizeConfig.screenWidth * 0.04,
-                                            top: SizeConfig.screenHeight * 0.07),
+                                            top:
+                                                SizeConfig.screenHeight * 0.07),
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
@@ -184,11 +323,13 @@ class _HomeState extends State<Home> {
                                                   height:
                                                       SizeConfig.screenHeight *
                                                           0.1,
-                                                  width: SizeConfig.screenHeight *
-                                                      0.1,
+                                                  width:
+                                                      SizeConfig.screenHeight *
+                                                          0.1,
                                                   child: Card(
                                                     shape: const CircleBorder(),
-                                                    clipBehavior: Clip.antiAlias,
+                                                    clipBehavior:
+                                                        Clip.antiAlias,
                                                     elevation: 0,
                                                     child: CircleAvatar(
                                                       radius: SizeConfig
@@ -225,10 +366,12 @@ class _HomeState extends State<Home> {
                                                           0.01),
                                                   child: Column(
                                                     crossAxisAlignment:
-                                                        CrossAxisAlignment.start,
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: [
                                                       Utils.textView(
-                                                          text: 'Marvin Steward',
+                                                          text:
+                                                              'Marvin Steward',
                                                           textColor: Colors
                                                               .blue.shade900,
                                                           fontSize: SizeConfig
@@ -243,8 +386,8 @@ class _HomeState extends State<Home> {
                                                           fontSize: SizeConfig
                                                                   .blockSizeVertical *
                                                               1.6,
-                                                          fontWeight:
-                                                              FontWeight.normal),
+                                                          fontWeight: FontWeight
+                                                              .normal),
                                                       SizedBox(
                                                         height: SizeConfig
                                                                 .screenHeight *
@@ -255,8 +398,8 @@ class _HomeState extends State<Home> {
                                                           Icon(
                                                               Icons
                                                                   .facebook_outlined,
-                                                              color: Colors
-                                                                  .blue.shade800),
+                                                              color: Colors.blue
+                                                                  .shade800),
                                                           SizedBox(
                                                             width: SizeConfig
                                                                     .screenWidth *
@@ -265,16 +408,18 @@ class _HomeState extends State<Home> {
                                                           Icon(
                                                               Icons
                                                                   .biotech_rounded,
-                                                              color: Colors.blue),
+                                                              color:
+                                                                  Colors.blue),
                                                           SizedBox(
                                                             width: SizeConfig
                                                                     .screenWidth *
                                                                 0.01,
                                                           ),
                                                           Icon(
-                                                              Icons.linked_camera,
-                                                              color: Colors
-                                                                  .blue.shade900),
+                                                              Icons
+                                                                  .linked_camera,
+                                                              color: Colors.blue
+                                                                  .shade900),
                                                           SizedBox(
                                                             width: SizeConfig
                                                                     .screenWidth *
@@ -283,7 +428,8 @@ class _HomeState extends State<Home> {
                                                           Icon(
                                                               Icons
                                                                   .insert_invitation,
-                                                              color: Colors.orange
+                                                              color: Colors
+                                                                  .orange
                                                                   .shade200),
                                                         ],
                                                       )
@@ -293,8 +439,8 @@ class _HomeState extends State<Home> {
                                               ],
                                             ),
                                             SizedBox(
-                                              height:
-                                                  SizeConfig.screenHeight * 0.04,
+                                              height: SizeConfig.screenHeight *
+                                                  0.04,
                                             ),
                                             Row(
                                               children: [
@@ -305,39 +451,41 @@ class _HomeState extends State<Home> {
                                                     fontSize: SizeConfig
                                                             .blockSizeVertical *
                                                         2.2,
-                                                    fontWeight: FontWeight.bold),
+                                                    fontWeight:
+                                                        FontWeight.bold),
                                                 SizedBox(
-                                                  width: SizeConfig.screenWidth *
-                                                      0.01,
+                                                  width:
+                                                      SizeConfig.screenWidth *
+                                                          0.01,
                                                 ),
                                                 Icon(Icons.info,
                                                     size: 20,
-                                                    color: Colors.blue.shade900),
+                                                    color:
+                                                        Colors.blue.shade900),
                                               ],
                                             ),
                                             SizedBox(
-                                              height:
-                                                  SizeConfig.screenHeight * 0.01,
+                                              height: SizeConfig.screenHeight *
+                                                  0.01,
                                             ),
                                             Row(children: [
                                               Container(
                                                   decoration: BoxDecoration(
-                                                      color: Colors.blue.shade100,
+                                                      color:
+                                                          Colors.blue.shade100,
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               20)),
                                                   padding: EdgeInsets.only(
                                                       top: SizeConfig.screenHeight *
                                                           0.006,
-                                                      bottom:
-                                                          SizeConfig.screenHeight *
-                                                              0.006,
-                                                      left:
-                                                          SizeConfig.screenWidth *
-                                                              0.02,
-                                                      right:
-                                                          SizeConfig.screenWidth *
-                                                              0.02),
+                                                      bottom: SizeConfig
+                                                              .screenHeight *
+                                                          0.006,
+                                                      left: SizeConfig.screenWidth *
+                                                          0.02,
+                                                      right: SizeConfig.screenWidth *
+                                                          0.02),
                                                   child: Utils.textView(
                                                       text: 'Makeup',
                                                       textColor:
@@ -348,27 +496,26 @@ class _HomeState extends State<Home> {
                                                       fontWeight:
                                                           FontWeight.normal)),
                                               SizedBox(
-                                                width:
-                                                    SizeConfig.screenWidth * 0.01,
+                                                width: SizeConfig.screenWidth *
+                                                    0.01,
                                               ),
                                               Container(
                                                   decoration: BoxDecoration(
-                                                      color: Colors.blue.shade100,
+                                                      color:
+                                                          Colors.blue.shade100,
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               20)),
                                                   padding: EdgeInsets.only(
                                                       top: SizeConfig.screenHeight *
                                                           0.006,
-                                                      bottom:
-                                                          SizeConfig.screenHeight *
-                                                              0.006,
-                                                      left:
-                                                          SizeConfig.screenWidth *
-                                                              0.02,
-                                                      right:
-                                                          SizeConfig.screenWidth *
-                                                              0.02),
+                                                      bottom: SizeConfig
+                                                              .screenHeight *
+                                                          0.006,
+                                                      left: SizeConfig.screenWidth *
+                                                          0.02,
+                                                      right: SizeConfig.screenWidth *
+                                                          0.02),
                                                   child: Utils.textView(
                                                       text: 'Beauty',
                                                       textColor:
@@ -379,27 +526,26 @@ class _HomeState extends State<Home> {
                                                       fontWeight:
                                                           FontWeight.normal)),
                                               SizedBox(
-                                                width:
-                                                    SizeConfig.screenWidth * 0.01,
+                                                width: SizeConfig.screenWidth *
+                                                    0.01,
                                               ),
                                               Container(
                                                   decoration: BoxDecoration(
-                                                      color: Colors.blue.shade100,
+                                                      color:
+                                                          Colors.blue.shade100,
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               20)),
                                                   padding: EdgeInsets.only(
                                                       top: SizeConfig.screenHeight *
                                                           0.006,
-                                                      bottom:
-                                                          SizeConfig.screenHeight *
-                                                              0.006,
-                                                      left:
-                                                          SizeConfig.screenWidth *
-                                                              0.02,
-                                                      right:
-                                                          SizeConfig.screenWidth *
-                                                              0.02),
+                                                      bottom: SizeConfig
+                                                              .screenHeight *
+                                                          0.006,
+                                                      left: SizeConfig.screenWidth *
+                                                          0.02,
+                                                      right: SizeConfig.screenWidth *
+                                                          0.02),
                                                   child: Utils.textView(
                                                       text: 'Model',
                                                       textColor:
@@ -410,27 +556,26 @@ class _HomeState extends State<Home> {
                                                       fontWeight:
                                                           FontWeight.normal)),
                                               SizedBox(
-                                                width:
-                                                    SizeConfig.screenWidth * 0.01,
+                                                width: SizeConfig.screenWidth *
+                                                    0.01,
                                               ),
                                               Container(
                                                   decoration: BoxDecoration(
-                                                      color: Colors.blue.shade100,
+                                                      color:
+                                                          Colors.blue.shade100,
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               20)),
                                                   padding: EdgeInsets.only(
                                                       top: SizeConfig.screenHeight *
                                                           0.006,
-                                                      bottom:
-                                                          SizeConfig.screenHeight *
-                                                              0.006,
-                                                      left:
-                                                          SizeConfig.screenWidth *
-                                                              0.02,
-                                                      right:
-                                                          SizeConfig.screenWidth *
-                                                              0.02),
+                                                      bottom: SizeConfig
+                                                              .screenHeight *
+                                                          0.006,
+                                                      left: SizeConfig.screenWidth *
+                                                          0.02,
+                                                      right: SizeConfig.screenWidth *
+                                                          0.02),
                                                   child: Utils.textView(
                                                       text: 'Actress',
                                                       textColor:
@@ -443,10 +588,12 @@ class _HomeState extends State<Home> {
                                             ]),
                                             Container(
                                                 margin: EdgeInsets.only(
-                                                    top: SizeConfig.screenHeight *
+                                                    top: SizeConfig
+                                                            .screenHeight *
                                                         0.05),
                                                 height:
-                                                    SizeConfig.screenHeight * 0.2,
+                                                    SizeConfig.screenHeight *
+                                                        0.2,
                                                 child: PageView.builder(
                                                   controller: _pageController,
                                                   itemCount: 3,
@@ -461,23 +608,25 @@ class _HomeState extends State<Home> {
                                                   },
                                                 )),
                                             SizedBox(
-                                              height:
-                                                  SizeConfig.screenHeight * 0.03,
+                                              height: SizeConfig.screenHeight *
+                                                  0.03,
                                             ),
                                             Utils.textView(
                                                 text: 'Age Engagement Rate',
                                                 textColor: Colors.blue.shade900,
-                                                fontSize:
-                                                    SizeConfig.blockSizeVertical *
-                                                        2.2,
+                                                fontSize: SizeConfig
+                                                        .blockSizeVertical *
+                                                    2.2,
                                                 fontWeight: FontWeight.bold),
                                             Row(
                                               children: [
                                                 Container(
-                                                  height: SizeConfig.screenWidth *
-                                                      0.4,
-                                                  width: SizeConfig.screenWidth *
-                                                      0.4,
+                                                  height:
+                                                      SizeConfig.screenWidth *
+                                                          0.4,
+                                                  width:
+                                                      SizeConfig.screenWidth *
+                                                          0.4,
                                                   child: ageChart(),
                                                 ),
                                                 Expanded(
@@ -486,7 +635,8 @@ class _HomeState extends State<Home> {
                                                       Row(
                                                         children: [
                                                           Card(
-                                                            shape: CircleBorder(),
+                                                            shape:
+                                                                CircleBorder(),
                                                             color: Colors
                                                                 .blue.shade900,
                                                             child: SizedBox(
@@ -522,7 +672,8 @@ class _HomeState extends State<Home> {
                                                             child: Utils.textView(
                                                                 text: '45%',
                                                                 textColor: Colors
-                                                                    .blue.shade900,
+                                                                    .blue
+                                                                    .shade900,
                                                                 fontSize: SizeConfig
                                                                         .blockSizeVertical *
                                                                     2.5,
@@ -535,7 +686,8 @@ class _HomeState extends State<Home> {
                                                       Row(
                                                         children: [
                                                           Card(
-                                                            shape: CircleBorder(),
+                                                            shape:
+                                                                CircleBorder(),
                                                             color: Colors
                                                                 .red.shade400,
                                                             child: SizedBox(
@@ -552,7 +704,8 @@ class _HomeState extends State<Home> {
                                                             child: Utils.textView(
                                                                 text: '26-38:',
                                                                 textColor: Colors
-                                                                    .blue.shade900,
+                                                                    .blue
+                                                                    .shade900,
                                                                 fontSize: SizeConfig
                                                                         .blockSizeVertical *
                                                                     2.5,
@@ -570,7 +723,8 @@ class _HomeState extends State<Home> {
                                                             child: Utils.textView(
                                                                 text: '30%',
                                                                 textColor: Colors
-                                                                    .blue.shade900,
+                                                                    .blue
+                                                                    .shade900,
                                                                 fontSize: SizeConfig
                                                                         .blockSizeVertical *
                                                                     2.5,
@@ -583,7 +737,8 @@ class _HomeState extends State<Home> {
                                                       Row(
                                                         children: [
                                                           Card(
-                                                            shape: CircleBorder(),
+                                                            shape:
+                                                                CircleBorder(),
                                                             color: Colors
                                                                 .cyan.shade200,
                                                             child: SizedBox(
@@ -600,7 +755,8 @@ class _HomeState extends State<Home> {
                                                             child: Utils.textView(
                                                                 text: '10-25:',
                                                                 textColor: Colors
-                                                                    .blue.shade900,
+                                                                    .blue
+                                                                    .shade900,
                                                                 fontSize: SizeConfig
                                                                         .blockSizeVertical *
                                                                     2.5,
@@ -618,7 +774,8 @@ class _HomeState extends State<Home> {
                                                             child: Utils.textView(
                                                                 text: '25%',
                                                                 textColor: Colors
-                                                                    .blue.shade900,
+                                                                    .blue
+                                                                    .shade900,
                                                                 fontSize: SizeConfig
                                                                         .blockSizeVertical *
                                                                     2.5,

@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:test_app/routes/routes.dart';
 import 'package:test_app/views/dashboard.dart';
 import 'package:test_app/views/home.dart';
+import 'package:test_app/views/list_page.dart';
 import 'package:test_app/views/maps.dart';
 import 'package:test_app/views/sign_up.dart';
 import 'package:test_app/views/login.dart';
@@ -25,6 +25,9 @@ class RouteGenerator {
       case Routes.maps:
         return CupertinoPageRoute(
             settings: settings, builder: (context) => Maps());
+      case Routes.listPage:
+        return CupertinoPageRoute(
+            settings: settings, builder: (context) => ListPage());
       default:
       // return _errorRoute();
     }
