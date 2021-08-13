@@ -5,7 +5,6 @@ import 'package:get_storage/get_storage.dart';
 import 'package:test_app/common/colors.dart';
 import 'package:test_app/routes/route_generator.dart';
 import 'package:test_app/routes/routes.dart';
-import 'common/constants.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,12 +18,6 @@ void main() async {
           fontFamily: 'Karla', primaryColor: CustomColors.primaryColor),
       debugShowCheckedModeBanner: false,
       initialRoute: Routes.home,
-      //Uncomment for session
-      // initialRoute: GetStorage().read(Constants.isLoggedIn) == null
-      //     ? Routes.login
-      //     : GetStorage().read(Constants.isLoggedIn) == '1'
-      //         ? Routes.dashboard
-      //         : Routes.login,
       onGenerateRoute: RouteGenerator.generateRoute,
     ));
   });

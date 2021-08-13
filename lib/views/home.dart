@@ -72,7 +72,6 @@ class _HomeState extends State<Home> {
 
   showPermissionDialog() {
     showDialog(
-        // barrierColor: CustomColors.transparentHeaderColor,
         context: context,
         builder: (context) => Dialog(
             shape: RoundedRectangleBorder(
@@ -125,13 +124,6 @@ class _HomeState extends State<Home> {
                         child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              // SvgPicture.asset(
-                              //   'assets/images/call.svg',
-                              //   semanticsLabel: 'one',
-                              //   height: 20,
-                              //   color: Colors.white,
-                              // ),
-                              // SizedBox(width: 10),
                               Utils.textView(
                                   text: 'Allow Permissions',
                                   fontSize: 15,
